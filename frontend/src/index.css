@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-slate-50 text-slate-900 antialiased;
+  font-family: "Noto Sans Thai", "Segoe UI", sans-serif;
+}
+
+.glass-card {
+  @apply bg-white border border-slate-200 rounded-2xl shadow-sm text-slate-900;
+}
+
+.glass-card h2,
+.glass-card h3 {
+  color: #0f172a;
+}
+
+.skeleton {
+  @apply animate-pulse bg-slate-200 rounded-lg;
+}
+
+/* Keep muted utility colors readable on the light palette. */
+.text-slate-300 {
+  color: #475569 !important;
+}
+
+.text-slate-400 {
+  color: #64748b !important;
+}
+
+.text-slate-500 {
+  color: #64748b !important;
+}
