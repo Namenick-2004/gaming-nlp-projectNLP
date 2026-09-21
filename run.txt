@@ -1,0 +1,16 @@
+ถ้าเพิ่งรันครั้งแรก ให้ติดตั้งก่อน:
+- Backend: รัน python -m venv venv แล้ว .\venv\Scripts\python.exe -m pip install -r requirements.txt ในโฟลเดอร์ backend
+- Frontend: รัน npm install ในโฟลเดอร์ frontend
+
+
+
+
+
+
+cd E:\gaming-nlp-project\backend
+.\venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+
+
+cd E:\gaming-nlp-project\frontend
+npm.cmd install
+npm.cmd run dev

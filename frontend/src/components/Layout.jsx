@@ -1,15 +1,13 @@
 import { Link } from "react-router-dom";
-import { Gamepad2, BarChart3, Globe2 } from "lucide-react";
+import { Trophy, Sparkles, Globe2 } from "lucide-react";
 
 const labels = {
   th: {
-    brand: "แดชบอร์ดวิเคราะห์เกม",
-    evaluation: "ประเมินโมเดล",
+    brand: "แดชบอร์ดวิเคราะห์กีฬา",
     language: "ภาษา",
   },
   en: {
-    brand: "Gaming NLP Dashboard",
-    evaluation: "Model Evaluation",
+    brand: "Sports NLP Dashboard",
     language: "Language",
   },
 };
@@ -23,7 +21,7 @@ export default function Layout({ children, language, setLanguage }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
           <Link to="/" className="flex items-center gap-3 font-bold text-lg text-slate-900">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-lg shadow-violet-200">
-              <Gamepad2 size={22} />
+              <Trophy size={22} />
             </div>
             <span>{t.brand}</span>
           </Link>
@@ -53,13 +51,11 @@ export default function Layout({ children, language, setLanguage }) {
               ))}
             </div>
 
-            <Link
-              to="/evaluation"
+            <span
               className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3.5 py-2 text-sm font-medium text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100"
             >
-              <BarChart3 size={16} />
-              {t.evaluation}
-            </Link>
+              <Sparkles size={16} /> Gemini
+            </span>
           </div>
         </div>
       </header>

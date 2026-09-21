@@ -20,7 +20,7 @@ class Video(Base):
     likes = Column(Integer)
     comment_count = Column(Integer)
     published_at = Column(String)
-    game_category = Column(String, nullable=True)
+    sport_category = Column(String, nullable=True)
     fetched_at = Column(DateTime, default=datetime.utcnow)
 
 

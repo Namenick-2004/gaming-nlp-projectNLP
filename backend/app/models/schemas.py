@@ -19,7 +19,7 @@ class VideoCard(BaseModel):
     likes: int
     comment_count: int
     published_at: str
-    game_category: Optional[str] = None
+    sport_category: Optional[str] = None
     category_id: Optional[str] = None
 
 
@@ -28,11 +28,6 @@ class VideoList(BaseModel):
 
 
 # ---------- Sentiment ----------
-
-class SentimentResult(BaseModel):
-    label: str            # positive | neutral | negative
-    confidence: float
-
 
 class SentimentDistribution(BaseModel):
     positive: float
@@ -71,7 +66,7 @@ class Keyword(BaseModel):
     keyword: str
     count: int
     importance: float
-    trend_percent: float
+    trend_percent: Optional[float] = None
 
 
 # ---------- Trending ----------
@@ -79,11 +74,6 @@ class Keyword(BaseModel):
 class TrendingTopic(BaseModel):
     topic: str
     mentions: int
-    growth_percent: float
-
-
-class TrendingGame(BaseModel):
-    name: str
     growth_percent: float
 
 
@@ -101,32 +91,3 @@ class SentimentTrendPoint(BaseModel):
 class SummaryResult(BaseModel):
     summary: str
     based_on_comments: int
-
-
-# ---------- Single comment analysis (internal use) ----------
-
-class AnalyzedComment(BaseModel):
-    text: str
-    sentiment: SentimentResult
-    emotion: dict
-    categories: List[str]
-
-
-# ---------- Model evaluation ----------
-
-class ClassMetric(BaseModel):
-    label: str
-    precision: float
-    recall: float
-    f1: float
-    support: int
-
-
-class ModelEvaluationReport(BaseModel):
-    model_name: str
-    accuracy: float
-    macro_f1: float
-    micro_f1: Optional[float] = None
-    per_class: List[ClassMetric]
-    confusion_matrix: List[List[int]]
-    labels: List[str]

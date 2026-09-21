@@ -12,21 +12,7 @@ sqlalchemy==2.0.31
 # --- YouTube ---
 google-api-python-client==2.134.0
 
-# --- NLP / ML ---
-torch==2.3.1
-accelerate==0.33.0
-transformers==4.42.3
-sentencepiece==0.2.0
-datasets==2.20.0
-scikit-learn==1.5.0
-sentence-transformers==3.0.1
-pythainlp==5.0.4
-keybert==0.8.4
-emoji==2.12.1
-# Optional: install separately when native build tools are available.
-# The embedding service falls back to KMeans when hdbscan is unavailable.
-# hdbscan==0.8.38.post1
-
-# --- Utilities ---
+# --- Gemini REST / HTTP ---
 httpx==0.27.0
+requests==2.32.3
 cachetools==5.3.3

@@ -9,7 +9,7 @@ re-running inference five times.
 from fastapi import APIRouter, Query, Depends, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.services.youtube_service import get_youtube_service
-from app.services.model_service import get_model_service
+from app.services.gemini_service import get_gemini_service
 from app.db.database import get_db
 from app.db.models import AnalysisSnapshot
 from app.config import settings
@@ -18,11 +18,12 @@ router = APIRouter(prefix="/api/analysis", tags=["analysis"])
 
 
 def _run_analysis(video_id: str, db: Session) -> dict:
+    service = get_gemini_service()
+    service.ensure_configured()
     yt = get_youtube_service()
     comments = yt.get_comments(video_id, max_comments=settings.MAX_COMMENTS_PER_ANALYSIS)
 
-    model_service = get_model_service()
-    result = model_service.analyze_comments(comments)
+    result = service.analyze_comments(comments)
 
     snapshot = AnalysisSnapshot(
         video_id=video_id,

@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import VideoAnalysis from "./pages/VideoAnalysis.jsx";
-import ModelEvaluation from "./pages/ModelEvaluation.jsx";
 
 export default function App() {
   const [language, setLanguage] = useState("th");
@@ -13,7 +12,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Dashboard language={language} />} />
         <Route path="/video/:videoId" element={<VideoAnalysis language={language} />} />
-        <Route path="/evaluation" element={<ModelEvaluation language={language} />} />
+        <Route path="/evaluation" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>
   );

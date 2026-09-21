@@ -12,33 +12,33 @@ router = APIRouter(prefix="/api/videos", tags=["videos"])
 @router.get("", response_model=VideoList)
 def list_videos(query: str = Query(""), max_results: int = Query(20, le=50)):
     yt = get_youtube_service()
-    videos = yt.search_gaming(query, order="relevance", max_results=max_results) if query.strip() else yt.trending(max_results=max_results)
+    videos = yt.search_sports(query, order="relevance", max_results=max_results) if query.strip() else yt.trending(max_results=max_results)
     return {"items": videos}
 
 
 @router.get("/trending", response_model=VideoList)
 def trending_videos(query: str = Query(""), max_results: int = Query(20, le=50)):
     yt = get_youtube_service()
-    videos = yt.search_gaming(query, order="relevance", max_results=max_results) if query.strip() else yt.trending(max_results=max_results)
+    videos = yt.search_sports(query, order="relevance", max_results=max_results) if query.strip() else yt.trending(max_results=max_results)
     return {"items": videos}
 
 
 @router.get("/latest", response_model=VideoList)
-def latest_videos(query: str = Query("gaming"), max_results: int = Query(20, le=50)):
+def latest_videos(query: str = Query("sports"), max_results: int = Query(20, le=50)):
     yt = get_youtube_service()
-    return {"items": yt.search_gaming(query.strip() or "gaming", order="date", max_results=max_results)}
+    return {"items": yt.search_sports(query.strip() or "sports", order="date", max_results=max_results)}
 
 
 @router.get("/most-viewed", response_model=VideoList)
-def most_viewed_videos(query: str = Query("gaming"), max_results: int = Query(20, le=50)):
+def most_viewed_videos(query: str = Query("sports"), max_results: int = Query(20, le=50)):
     yt = get_youtube_service()
-    return {"items": yt.search_gaming(query.strip() or "gaming", order="viewCount", max_results=max_results)}
+    return {"items": yt.search_sports(query.strip() or "sports", order="viewCount", max_results=max_results)}
 
 
 @router.get("/most-commented", response_model=VideoList)
-def most_commented_videos(query: str = Query("gaming"), max_results: int = Query(20, le=50)):
+def most_commented_videos(query: str = Query("sports"), max_results: int = Query(20, le=50)):
     yt = get_youtube_service()
-    return {"items": yt.most_commented(query.strip() or "gaming", max_results=max_results)}
+    return {"items": yt.most_commented(query.strip() or "sports", max_results=max_results)}
 
 
 @router.get("/categories")

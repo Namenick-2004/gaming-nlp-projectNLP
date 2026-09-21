@@ -1,18 +1,8 @@
-"""
-Basic smoke tests. Run with APP_MODE=mock so no API key / GPU is
-needed:
-
-    APP_MODE=mock pytest
-
-These check the API contract (status codes + response shape), not
-model quality — model quality is checked by training/evaluate.py.
-"""
 import os
 os.environ.setdefault("APP_MODE", "mock")
 
 from fastapi.testclient import TestClient
 from app.main import app
-from app.services.nlp.preprocessing import clean_generated_text
 
 client = TestClient(app)
 
@@ -21,6 +11,16 @@ def test_health_check():
     resp = client.get("/")
     assert resp.status_code == 200
     assert resp.json()["status"] == "ok"
+    assert resp.json()["nlp_source"] == "gemini"
+    assert "GEMINI_API_KEY" not in resp.json()
+
+
+def test_missing_key_returns_actionable_error(monkeypatch):
+    from app.config import settings
+    monkeypatch.setattr(settings, "GEMINI_API_KEY", "")
+    response = client.post("/api/analysis/mock_001/run")
+    assert response.status_code == 503
+    assert "GEMINI_API_KEY" in response.json()["detail"]
 
 
 def test_list_videos():
@@ -29,6 +29,42 @@ def test_list_videos():
     items = resp.json()["items"]
     assert len(items) == 5
     assert "video_id" in items[0]
+    assert all(item["category_id"] == "17" for item in items)
+    assert all(item["sport_category"] for item in items)
+
+
+def test_sports_trends():
+    response = client.get("/api/sports-trends")
+    assert response.status_code == 200
+    assert response.json()["trending_sports"]
+
+
+def test_youtube_discovery_uses_sports_category():
+    from unittest.mock import MagicMock, patch
+    from app.services.youtube_service import YouTubeService
+    service = YouTubeService.__new__(YouTubeService)
+    service.client = MagicMock()
+    service.client.videos.return_value.list.return_value.execute.return_value = {"items": []}
+    service.client.search.return_value.list.return_value.execute.return_value = {"items": []}
+    with patch("app.services.youtube_service.cache_get", return_value=None):
+        service.trending()
+        service.search_sports("football")
+    assert service.client.videos.return_value.list.call_args.kwargs["videoCategoryId"] == "17"
+    assert service.client.search.return_value.list.call_args.kwargs["videoCategoryId"] == "17"
+
+
+def test_non_sports_chart_falls_back_to_sports_search():
+    from unittest.mock import MagicMock, patch
+    from app.services.youtube_service import YouTubeService
+    service = YouTubeService.__new__(YouTubeService)
+    service.client = MagicMock()
+    service.client.videos.return_value.list.return_value.execute.return_value = {
+        "items": [{"snippet": {"categoryId": "20"}}]
+    }
+    service.search_sports = MagicMock(return_value=[{"category_id": "17"}])
+    with patch("app.services.youtube_service.cache_get", return_value=None):
+        assert service.trending(4) == [{"category_id": "17"}]
+    service.search_sports.assert_called_once_with("กีฬา", order="relevance", max_results=4)
 
 
 def test_video_comments():
@@ -37,7 +73,12 @@ def test_video_comments():
     assert len(resp.json()["comments"]) > 0
 
 
-def test_full_analysis_pipeline():
+def test_full_analysis_pipeline(monkeypatch):
+    from app.config import settings
+    from app.services.gemini_service import GeminiService
+    from tests.test_gemini import response_for
+    monkeypatch.setattr(settings, "GEMINI_API_KEY", "test-key")
+    monkeypatch.setattr("app.services.gemini_service.httpx.post", lambda *args, **kwargs: response_for(kwargs["json"]))
     resp = client.post("/api/analysis/mock_001/run")
     assert resp.status_code == 200
     body = resp.json()
@@ -47,12 +88,3 @@ def test_full_analysis_pipeline():
     sentiment = body["sentiment"]
     total = sentiment["positive"] + sentiment["neutral"] + sentiment["negative"]
     assert 99 <= total <= 101  # percentages should sum to ~100
-
-
-def test_clean_generated_text_removes_special_tokens_and_repeats():
-    raw = "<extra_id_0> เกมนี้สนุกมากค่ะค่ะค่ะ <extra_id_1> เกมนี้มีปัญหาการกระตุก"
-    cleaned = clean_generated_text(raw)
-    assert "<extra_id_" not in cleaned
-    assert "ค่ะ" not in cleaned or "ค่ะ" in cleaned
-    assert "เกมนี้สนุกมาก" in cleaned
-    assert "ปัญหาการกระตุก" in cleaned

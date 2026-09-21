@@ -23,10 +23,20 @@ export const getMostCommentedVideos = (maxResults = 20, query = "") =>
 
 export const getVideo = (videoId) => api.get(`/videos/${videoId}`).then((r) => r.data);
 
-export const getGamingTrends = () => api.get(`/gaming-trends`).then((r) => r.data);
+export const getSportsTrends = () => api.get(`/sports-trends`).then((r) => r.data);
 
-export const runAnalysis = (videoId) =>
-  api.post(`/analysis/${videoId}/run`).then((r) => r.data);
+// React StrictMode and language changes can mount the same analysis twice.
+// Share the in-flight request so one visit does not pay for duplicate Gemini calls.
+const pendingAnalyses = new Map();
+export const runAnalysis = (videoId) => {
+  if (!pendingAnalyses.has(videoId)) {
+    const request = api.post(`/analysis/${videoId}/run`, null, { timeout: 300_000 })
+      .then((r) => r.data)
+      .finally(() => pendingAnalyses.delete(videoId));
+    pendingAnalyses.set(videoId, request);
+  }
+  return pendingAnalyses.get(videoId);
+};
 
 export const getSentiment = (videoId) => api.get(`/analysis/${videoId}/sentiment`).then((r) => r.data);
 export const getEmotion = (videoId) => api.get(`/analysis/${videoId}/emotion`).then((r) => r.data);

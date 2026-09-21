@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Flame, Sparkles, BarChart3, Search, X } from "lucide-react";
-import { getGamingTrends, getTrendingVideos, getLatestVideos, getMostViewedVideos, getMostCommentedVideos } from "../api/client.js";
+import { getSportsTrends, getTrendingVideos, getLatestVideos, getMostViewedVideos, getMostCommentedVideos } from "../api/client.js";
 import VideoCard from "../components/VideoCard.jsx";
 import { VideoCardSkeleton, EmptyState, ErrorState } from "../components/Skeletons.jsx";
 
@@ -40,51 +40,55 @@ export default function Dashboard({ language = "th" }) {
   const [trends, setTrends] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const videoLimit = tab === "trending" ? 10 : 16;
 
   const text = {
     th: {
-      hero: "เกมที่กำลังได้รับความนิยม",
-      heroSub: "ติดตามแนวโน้มเกมที่มีการพูดถึงและการมีส่วนร่วมจากชุมชนอย่างต่อเนื่อง",
-      title: "เกมยอดนิยม",
+      hero: "กีฬาที่กำลังได้รับความนิยม",
+      heroSub: "ติดตามแนวโน้มกีฬาที่มีการพูดถึงและการมีส่วนร่วมจากชุมชนอย่างต่อเนื่อง",
+      title: "กีฬายอดนิยม",
       noVideos: "ไม่พบวิดีโอ",
       noVideosSub: "ลองสลับแท็บอื่น หรือตรวจสอบคีย์ YouTube API",
       fetchError: "ไม่สามารถโหลดข้อมูลได้ กรุณาตรวจสอบว่า Backend กำลังทำงานอยู่",
-      searchPlaceholder: "ค้นหาชื่อเกม เช่น Valorant หรือ Minecraft",
-      search: "ค้นหาเกม",
+      searchPlaceholder: "ค้นหากีฬา เช่น ฟุตบอล หรือ วอลเลย์บอล",
+      search: "ค้นหากีฬา",
     },
     en: {
-      hero: "Trending games",
-      heroSub: "Monitor the games generating the strongest attention and community engagement.",
-      title: "Trending Games",
+      hero: "Trending sports",
+      heroSub: "Monitor the sports generating the strongest attention and community engagement.",
+      title: "Trending Sports",
       noVideos: "No videos found",
       noVideosSub: "Try another tab or check the YouTube API key.",
       fetchError: "Unable to load data. Please check whether the backend is running.",
-      searchPlaceholder: "Search a game, e.g. Valorant or Minecraft",
-      search: "Search games",
+      searchPlaceholder: "Search sports, e.g. football or volleyball",
+      search: "Search sports",
     },
   }[language] || {
-    hero: "เกมที่กำลังได้รับความนิยม",
-    heroSub: "ติดตามแนวโน้มเกมที่มีการพูดถึงและการมีส่วนร่วมจากชุมชนอย่างต่อเนื่อง",
-    title: "เกมยอดนิยม",
+    hero: "กีฬาที่กำลังได้รับความนิยม",
+    heroSub: "ติดตามแนวโน้มกีฬาที่มีการพูดถึงและการมีส่วนร่วมจากชุมชนอย่างต่อเนื่อง",
+    title: "กีฬายอดนิยม",
     noVideos: "ไม่พบวิดีโอ",
     noVideosSub: "ลองสลับแท็บอื่น หรือตรวจสอบคีย์ YouTube API",
     fetchError: "ไม่สามารถโหลดข้อมูลได้ กรุณาตรวจสอบว่า Backend กำลังทำงานอยู่",
-    searchPlaceholder: "ค้นหาชื่อเกม เช่น Valorant หรือ Minecraft",
-    search: "ค้นหาเกม",
+    searchPlaceholder: "ค้นหากีฬา เช่น ฟุตบอล หรือ วอลเลย์บอล",
+    search: "ค้นหากีฬา",
   };
 
   useEffect(() => {
     setLoading(true);
     setError(null);
     const fetcher = fetchers[tab];
-    Promise.all([fetcher(16, searchQuery), getGamingTrends()])
+    let active = true;
+    Promise.all([fetcher(videoLimit, searchQuery), getSportsTrends()])
       .then(([videoList, trendData]) => {
-        setVideos(videoList);
+        if (!active) return;
+        setVideos(videoList.slice(0, videoLimit));
         setTrends(trendData);
       })
-      .catch(() => setError(text.fetchError))
-      .finally(() => setLoading(false));
-  }, [tab, searchQuery, text.fetchError]);
+      .catch(() => { if (active) setError(text.fetchError); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [tab, searchQuery, text.fetchError, videoLimit]);
 
   const submitSearch = (event) => {
     event.preventDefault();
@@ -115,7 +119,7 @@ export default function Dashboard({ language = "th" }) {
               <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-slate-300">
                 <Flame size={14} /> Trend
               </div>
-              <div className="mt-2 text-2xl font-black">{trends?.trending_games?.length ?? 0}</div>
+              <div className="mt-2 text-2xl font-black">{trends?.trending_sports?.length ?? 0}</div>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/5 p-3 backdrop-blur-sm">
               <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-slate-300">
@@ -135,7 +139,7 @@ export default function Dashboard({ language = "th" }) {
           <h2 className="text-xl font-bold text-slate-900">{text.title}</h2>
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {trends?.trending_games?.slice(0, 4).map((g) => (
+          {trends?.trending_sports?.slice(0, 4).map((g) => (
             <div key={g.name} className="group flex min-h-[94px] items-center justify-between rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-indigo-50 p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md">
               <div className="min-w-0 pr-3">
                 <p className="truncate text-base font-semibold text-slate-800">{g.name}</p>
@@ -191,10 +195,10 @@ export default function Dashboard({ language = "th" }) {
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {loading
-              ? Array.from({ length: 8 }).map((_, i) => <VideoCardSkeleton key={i} />)
+              ? Array.from({ length: videoLimit }).map((_, i) => <VideoCardSkeleton key={i} />)
               : videos.length === 0
               ? <EmptyState title={text.noVideos} subtitle={text.noVideosSub} />
-              : videos.map((v) => <VideoCard key={v.video_id} video={v} language={language} />)}
+              : videos.map((v, index) => <VideoCard key={v.video_id} video={v} language={language} rank={tab === "trending" ? index + 1 : undefined} />)}
           </div>
         )}
       </section>

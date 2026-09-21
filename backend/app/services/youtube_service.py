@@ -1,7 +1,7 @@
 """
 Real integration with YouTube Data API v3.
-The user never types a URL: this service auto-discovers gaming
-videos via search + the "Gaming" video category, then the frontend
+The user never types a URL: this service auto-discovers sports
+videos via search + the "Sports" video category, then the frontend
 lets them click "Analyze" on whichever card they want.
 """
 import json
@@ -12,7 +12,7 @@ import requests
 from app.config import settings
 from app.services.cache import cache_get, cache_set
 
-GAMING_CATEGORY_ID = "20"  # YouTube's fixed category id for "Gaming"
+SPORTS_CATEGORY_ID = "17"  # YouTube's fixed category id for "Sports"
 
 
 class YouTubeService:
@@ -38,19 +38,32 @@ class YouTubeService:
             self.client.videos().list(
             part="snippet,statistics",
             chart=chart,                     # "mostPopular"
-            videoCategoryId=GAMING_CATEGORY_ID,
+            videoCategoryId=SPORTS_CATEGORY_ID,
             regionCode=region_code,
             maxResults=max_results,
             )
         )
 
-        videos = [_map_video(item) for item in resp.get("items", [])]
-        return cache_set(cache_key, videos)
+        videos = [_map_video(item) for item in resp.get("items", [])
+                  if item.get("snippet", {}).get("categoryId") == SPORTS_CATEGORY_ID]
+        if len(videos) < max_results:
+            # The regional sports chart can contain fewer entries than requested.
+            # Keep chart order and fill the remaining slots with sports results.
+            extra_videos = self.search_sports("กีฬา", order="relevance", max_results=min(50, max_results + len(videos)))
+            seen = {video["video_id"] for video in videos}
+            for video in extra_videos:
+                video_id = video.get("video_id")
+                if video_id not in seen:
+                    videos.append(video)
+                    seen.add(video_id)
+                if len(videos) >= max_results:
+                    break
+        return cache_set(cache_key, videos[:max_results])
 
     def trending(self, max_results: int = 20) -> list[dict]:
         return self._videos_by_chart("mostPopular", max_results=max_results)
 
-    def search_gaming(self, query: str, order: str = "date", max_results: int = 20) -> list[dict]:
+    def search_sports(self, query: str, order: str = "date", max_results: int = 20) -> list[dict]:
         """order: 'date' -> latest, 'viewCount' -> most viewed,
         'relevance' + we sort client-side by commentCount -> most commented."""
         cache_key = f"search:{query}:{order}:{max_results}"
@@ -62,7 +75,7 @@ class YouTubeService:
             part="id",
             q=query,
             type="video",
-            videoCategoryId=GAMING_CATEGORY_ID,
+            videoCategoryId=SPORTS_CATEGORY_ID,
             order=order,
             maxResults=max_results,
         ))
@@ -73,11 +86,12 @@ class YouTubeService:
         videos_resp = self._execute(self.client.videos().list(
             part="snippet,statistics", id=",".join(ids)
         ))
-        videos = [_map_video(item) for item in videos_resp.get("items", [])]
+        videos = [_map_video(item) for item in videos_resp.get("items", [])
+                  if item.get("snippet", {}).get("categoryId") == SPORTS_CATEGORY_ID]
         return cache_set(cache_key, videos)
 
-    def most_commented(self, query: str = "gaming", max_results: int = 20) -> list[dict]:
-        videos = self.search_gaming(query, order="relevance", max_results=max_results)
+    def most_commented(self, query: str = "sports", max_results: int = 20) -> list[dict]:
+        videos = self.search_sports(query, order="relevance", max_results=max_results)
         return sorted(videos, key=lambda v: v["comment_count"], reverse=True)
 
     def get_video(self, video_id: str) -> dict | None:
@@ -201,7 +215,7 @@ def _map_video(item: dict) -> dict:
         "likes": int(stats.get("likeCount", 0)),
         "comment_count": int(stats.get("commentCount", 0)),
         "published_at": snippet["publishedAt"],
-        "game_category": snippet.get("categoryId"),
+        "sport_category": "Sports" if snippet.get("categoryId") == SPORTS_CATEGORY_ID else None,
         "category_id": snippet.get("categoryId"),
     }
 

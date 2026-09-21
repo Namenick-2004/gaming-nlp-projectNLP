@@ -22,21 +22,21 @@ export default function VideoAnalysis({ language = "th" }) {
     th: {
       back: "กลับสู่หน้าหลัก",
       analysisError: "วิเคราะห์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง",
-      summary: "สรุปโดย AI",
+      summary: "สรุป",
       generatedFrom: "สร้างจาก",
       comments: "ความคิดเห็น",
     },
     en: {
       back: "Back to Dashboard",
       analysisError: "Analysis failed. Please try again.",
-      summary: "AI Summary",
+      summary: "Summary",
       generatedFrom: "Generated from",
       comments: "comments",
     },
   }[language] || {
     back: "กลับสู่หน้าหลัก",
     analysisError: "วิเคราะห์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง",
-    summary: "สรุปโดย AI",
+    summary: "สรุป",
     generatedFrom: "สร้างจาก",
     comments: "ความคิดเห็น",
   };
@@ -46,7 +46,7 @@ export default function VideoAnalysis({ language = "th" }) {
     setError(null);
     // The trend endpoint reads persisted snapshots, so it must run after
     // the current analysis request has finished.
-    Promise.all([getVideo(videoId), runAnalysis(videoId)])
+    Promise.all([getVideo(videoId).then((data) => { setVideo(data); return data; }), runAnalysis(videoId)])
       .then(async ([videoData, analysisData]) => {
         const trendData = await getSentimentTrend(videoId);
         setVideo(videoData);

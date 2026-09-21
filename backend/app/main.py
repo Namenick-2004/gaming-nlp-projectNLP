@@ -4,8 +4,7 @@ FastAPI application entrypoint.
 Run with:
     uvicorn app.main:app --reload --port 8000
 
-Models (or the mock service) are loaded ONCE here at startup via
-get_model_service(), not per-request, per the performance spec.
+Analysis is performed remotely by Gemini; no local model loading.
 """
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,12 +13,13 @@ from googleapiclient.errors import HttpError
 from app.config import settings
 from app.db.database import Base, engine
 from app.routers import videos, analysis, trends
+from app.services.gemini_service import GeminiError
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
-    title="YouTube Gaming Trend & Sentiment Analysis API",
-    description="NLP backend for analyzing gaming video comments (Thai + English).",
+    title="YouTube Sports Trend & Sentiment Analysis API",
+    description="NLP backend for analyzing sports video comments (Thai + English).",
     version="1.0.0",
 )
 
@@ -61,13 +61,9 @@ app.include_router(analysis.router)
 app.include_router(trends.router)
 
 
-@app.on_event("startup")
-def preload_models():
-    """Warms up the model singleton at boot instead of on first
-    request, so the first user doesn't eat the ~seconds-long model
-    load time."""
-    from app.services.model_service import get_model_service
-    get_model_service()
+@app.exception_handler(GeminiError)
+async def gemini_error_handler(request: Request, exc: GeminiError):
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
 
 @app.get("/")
@@ -76,5 +72,7 @@ def health_check():
         "status": "ok",
         "mode": settings.APP_MODE,
         "youtube_source": "mock" if settings.APP_MODE == "mock" else "youtube_api",
-        "nlp_source": "mock" if settings.APP_MODE in {"mock", "youtube_mock_nlp"} else "models",
+        "nlp_source": "gemini",
+        "gemini_configured": bool(settings.GEMINI_API_KEY.strip()),
+        "gemini_model": settings.GEMINI_MODEL,
     }

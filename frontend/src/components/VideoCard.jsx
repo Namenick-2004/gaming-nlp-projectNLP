@@ -7,21 +7,26 @@ function formatCount(n) {
   return String(n);
 }
 
-export default function VideoCard({ video, language = "th", categoryName }) {
+export default function VideoCard({ video, language = "th", categoryName, rank }) {
   const navigate = useNavigate();
   const label = language === "en" ? "Analyze" : "วิเคราะห์";
 
   return (
     <article className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-lg">
       <div className="relative aspect-video overflow-hidden">
+        {rank != null && (
+          <span className="absolute right-2 top-2 z-10 rounded-full bg-indigo-600 px-3 py-1 text-sm font-bold text-white shadow-md">
+            {language === "en" ? `#${rank}` : `อันดับ ${rank}`}
+          </span>
+        )}
         <img
           src={video.thumbnail}
           alt={video.title}
           className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
         />
-        {(categoryName || video.game_category) && (
+        {(categoryName || video.sport_category) && (
           <span className="absolute left-2 top-2 rounded-full border border-white/10 bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
-            {categoryName || video.game_category}
+            {categoryName || (video.category_id === "17" ? (language === "en" ? "Sports" : "กีฬา") : video.sport_category)}
           </span>
         )}
       </div>

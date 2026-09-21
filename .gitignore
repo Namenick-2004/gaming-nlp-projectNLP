@@ -18,7 +18,3 @@ __pycache__/
 # Frontend dependencies and builds
 frontend/node_modules/
 frontend/dist/
-
-# Large generated ML artifacts (keep or download locally for live inference)
-backend/models/
-backend/training/checkpoints_*/

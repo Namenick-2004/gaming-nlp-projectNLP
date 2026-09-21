@@ -1,28 +1,9 @@
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from "recharts";
-
-const EMOJI = { joy: "😊", anger: "😡", surprise: "😮", sadness: "😢", fear: "😨", neutral: "😐" };
-const COLORS = { joy: "#facc15", anger: "#ef4444", surprise: "#38bdf8", sadness: "#818cf8", fear: "#a855f7", neutral: "#94a3b8" };
-
-export default function EmotionChart({ data }) {
+﻿import AnalysisPanel, { MetricBars } from "./AnalysisPanel.jsx";
+const names = { joy: ["ยินดี", "Joy"], anger: ["โกรธ", "Anger"], sadness: ["เศร้า", "Sadness"], surprise: ["ประหลาดใจ", "Surprise"], fear: ["กังวล / กลัว", "Fear"], neutral: ["เป็นกลาง", "Neutral"] };
+const colors = { joy: "#d97706", anger: "#e11d48", sadness: "#6366f1", surprise: "#0891b2", fear: "#9333ea", neutral: "#94a3b8" };
+export default function EmotionChart({ data, language = "th" }) {
   if (!data) return null;
-  const chartData = Object.keys(EMOJI).map((k) => ({ name: `${EMOJI[k]} ${k}`, key: k, value: data[k] ?? 0 }));
-
-  return (
-    <div className="glass-card p-4">
-      <h3 className="font-semibold mb-2">❤️ Emotion Analysis</h3>
-      <ResponsiveContainer width="100%" height={220}>
-        <BarChart data={chartData} layout="vertical" margin={{ left: 10 }}>
-          <XAxis type="number" hide domain={[0, 100]} />
-          <YAxis type="category" dataKey="name" width={90} tick={{ fill: "#cbd5e1", fontSize: 12 }} />
-          <Tooltip formatter={(v) => `${v}%`} contentStyle={{ background: "#151b2e", border: "none", borderRadius: 8 }} />
-          <Bar dataKey="value" radius={[0, 6, 6, 0]}>
-            {chartData.map((entry) => (
-              <Cell key={entry.key} fill={COLORS[entry.key]} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-      <p className="text-xs text-slate-400 text-center">Based on {data.sample_size} comments</p>
-    </div>
-  );
+  const en = language === "en";
+  const items = Object.entries(names).map(([key, label]) => ({ key, name: label[en ? 1 : 0], value: data[key] || 0, color: colors[key] })).sort((a, b) => b.value - a.value);
+  return <AnalysisPanel title={en ? "Emotional response" : "อารมณ์ของผู้ชม"} subtitle={en ? "Primary emotion in each comment" : "อารมณ์หลักของแต่ละความคิดเห็น เรียงตามสัดส่วน"} badge={en ? "6 emotions" : "6 อารมณ์"}><MetricBars items={items} /></AnalysisPanel>;
 }

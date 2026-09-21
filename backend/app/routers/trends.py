@@ -1,6 +1,6 @@
 """
-Cross-video / gaming-wide trend endpoints for the dashboard's
-"Trending Games" and "Trending Keywords" widgets.
+Cross-video / sports-wide trend endpoints for the dashboard's
+"Trending Sports" and "Trending Keywords" widgets.
 """
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
@@ -8,18 +8,18 @@ from app.db.database import get_db
 from app.db.models import AnalysisSnapshot
 from app.services.youtube_service import get_youtube_service
 
-router = APIRouter(prefix="/api/gaming-trends", tags=["trends"])
+router = APIRouter(prefix="/api/sports-trends", tags=["trends"])
 
 
 @router.get("")
-def gaming_trends(db: Session = Depends(get_db)):
+def sports_trends(db: Session = Depends(get_db)):
     yt = get_youtube_service()
     current_videos = yt.trending(max_results=50)
 
-    # YouTube does not expose the game name as a separate field. Use the
+    # YouTube does not expose the sport name as a separate field. Use the
     # real video title and view count instead of exposing category ids such
-    # as "20" as if they were game names.
-    trending_games = [
+    # as "17" as if they were sport names.
+    trending_sports = [
         {
             "name": video["title"],
             "views": video["views"],
@@ -32,7 +32,7 @@ def gaming_trends(db: Session = Depends(get_db)):
     overall_emotion = _overall_emotion(db)
 
     return {
-        "trending_games": trending_games,
+        "trending_sports": trending_sports,
         "trending_videos": current_videos[:20],
         "overall_sentiment": overall_sentiment,
         "overall_emotion": overall_emotion,
